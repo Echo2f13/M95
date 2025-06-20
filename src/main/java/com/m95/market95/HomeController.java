@@ -2,12 +2,15 @@ package com.m95.market95;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
 public class HomeController {
 
-    @GetMapping("/")
-    public String index() {
-        return "index";  // This returns the name of the Thymeleaf template "index.html" in templates/
+    // Match all paths that do not start with /api or static files
+    @GetMapping(value = { "/", "/**/{path:[^\\.]*}" })
+    public String forward() {
+        // Forward to React's index.html
+        return "forward:/index.html";
     }
 }
