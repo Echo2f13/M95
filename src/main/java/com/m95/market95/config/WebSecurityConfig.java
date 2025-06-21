@@ -1,11 +1,10 @@
+// src/main/java/com/m95/market95/config/WebSecurityConfig.java
 package com.m95.market95.config;
 
 import com.m95.market95.repository.UserRepository;
 import com.m95.market95.security.JwtAuthenticationFilter;
 import com.m95.market95.security.MyUserDetails;
-
 import java.util.List;
-
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -32,26 +31,33 @@ public class WebSecurityConfig {
             .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 
-    // 2) Build the security filter chain, taking the JwtAuthenticationFilter as a method parameter
+    // 2) Build the single SecurityFilterChain, injecting your JwtAuthenticationFilter
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                        JwtAuthenticationFilter jwtAuthFilter) throws Exception {
+                                           JwtAuthenticationFilter jwtAuthFilter) throws Exception {
+
         http
-        // 1) Enable CORS using the bean you defined
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        // 2) Disable CSRF (we’re stateless)
-        .csrf(csrf -> csrf.disable())
-        // 3) Your URL rules
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**").permitAll()
-            .requestMatchers("/api/admin/**").hasRole("ADMIN")
-            .requestMatchers("/api/**").authenticated()
-            .anyRequest().permitAll()
-        )
-        // 4) Stateless sessions
-        .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        // 5) JWT filter
-        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+          // enable CORS
+          .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+          // disable CSRF since we're stateless
+          .csrf(csrf -> csrf.disable())
+          // URL rules
+          .authorizeHttpRequests(auth -> auth
+              // public: auth and static content
+              .requestMatchers("/api/auth/**", "/", "/index.html", "/static/**").permitAll()
+              // only ADMIN role can hit /api/admin/**
+              .requestMatchers("/api/admin/**").hasRole("ADMIN")
+              // only authenticated users can hit favorites endpoints
+              .requestMatchers("/api/fav-stocks/**").authenticated()
+              // all other /api/** also require auth
+              .requestMatchers("/api/**").authenticated()
+              // everything else is open
+              .anyRequest().permitAll()
+          )
+          // stateless session (no cookie-based sessions)
+          .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+          // our JWT filter runs before the UsernamePasswordAuthenticationFilter
+          .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
@@ -68,18 +74,17 @@ public class WebSecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
+    // 5) CORS configuration to allow your React front-end
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:3000"));  // your React URL
-        config.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        config.setAllowedOrigins(List.of("http://localhost:3000"));  // React dev URL
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        var source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
     }
-
-
 }

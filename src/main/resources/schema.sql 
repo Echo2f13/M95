@@ -1,0 +1,17 @@
+CREATE TABLE fav_stock (
+  id CHAR(36) PRIMARY KEY,                             -- UUID
+  user_token VARCHAR(255) NOT NULL,                    -- FK into your users table
+  fav_stock_name VARCHAR(50) NOT NULL UNIQUE,          -- e.g. "AAPL"
+  bought BOOLEAN NOT NULL DEFAULT FALSE,               -- have they actually purchased?
+  bought_date DATE NULL,                               -- when they bought it
+  bought_price DECIMAL(19,4) NULL,                     -- purchase price
+  stop_loss DECIMAL(19,4) NULL,                        -- user‐defined stop‐loss
+  target_price DECIMAL(19,4) NULL,                     -- optional profit target
+  quantity INT NULL,                                   -- how many shares
+  notes TEXT NULL,                                     -- free‐form user notes
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL 
+    DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT fk_user 
+    FOREIGN KEY(user_token) REFERENCES users(token)
+);
