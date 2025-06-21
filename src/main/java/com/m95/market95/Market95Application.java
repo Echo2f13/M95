@@ -5,9 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 public class Market95Application {
-
-	public static void main(String[] args) {
-		SpringApplication.run(Market95Application.class, args);
-	}
-
+    public static void main(String[] args) {
+        SpringApplication.run(Market95Application.class, args);
+    }
 }
